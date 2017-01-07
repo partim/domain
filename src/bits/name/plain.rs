@@ -263,7 +263,19 @@ impl DNameSlice {
 
 //--- DName
 
+/*
 impl<'a> DName for &'a DNameSlice {
+    fn to_cow(&self) -> Cow<DNameSlice> {
+        Cow::Borrowed(self)
+    }
+
+    fn labels(&self) -> NameLabels {
+        DNameSlice::labels(self)
+    }
+}
+*/
+
+impl<T: Deref<Target=DNameSlice>> DName for T {
     fn to_cow(&self) -> Cow<DNameSlice> {
         Cow::Borrowed(self)
     }
@@ -718,6 +730,7 @@ impl DNameBuf {
 
 //--- DName
 
+/*
 impl DName for DNameBuf {
     fn to_cow(&self) -> Cow<DNameSlice> {
         Cow::Borrowed(self)
@@ -737,6 +750,7 @@ impl<'a> DName for &'a DNameBuf {
         DNameSlice::labels(self)
     }
 }
+*/
 
 
 //--- From and FromStr

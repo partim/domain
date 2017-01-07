@@ -29,7 +29,9 @@
 //! succeeding or failing all their requests.
 
 use std::io;
-use futures::{Future, Complete, Oneshot, Poll, oneshot};
+use futures::{Future, Poll};
+use futures::sync::oneshot;
+//use futures::sync::mpsc::{Receiver, Sender};
 use tokio_core::channel::{Receiver, Sender};
 use ::bits::{Message, MessageBuf, MessageBuilder};
 use super::error::{Error};
@@ -50,18 +52,18 @@ use super::error::{Error};
 /// well, it contains an `Ok` with the oneshot future that will receive the
 /// result from the service request.
 #[allow(type_complexity)]
-pub struct QueryRequest(Result<Oneshot<(Result<MessageBuf, Error>,
-                                        MessageBuilder)>,
+pub struct QueryRequest(Result<oneshot::Receiver<(Result<MessageBuf, Error>,
+                                                  MessageBuilder)>,
                                Option<io::Error>>);
 
 
 impl QueryRequest {
     /// Starts the request dispatching a message to a service.
     pub fn new(message: MessageBuilder, service: &ServiceHandle) -> Self {
-        let (c, o) = oneshot();
-        let sreq = ServiceRequest::new(message, c);
+        let (tx, rx) = oneshot::channel();
+        let sreq = ServiceRequest::new(message, tx);
         match service.tx.send(sreq) {
-            Ok(()) => QueryRequest(Ok(o)),
+            Ok(()) => QueryRequest(Ok(rx)),
             Err(err) => QueryRequest(Err(Some(err)))
         }
     }
@@ -114,7 +116,7 @@ pub struct ServiceRequest {
     message: MessageBuilder,
 
     /// The complete side of our oneshot to return a response.
-    complete: Complete<(Result<MessageBuf, Error>, MessageBuilder)>,
+    complete: oneshot::Sender<(Result<MessageBuf, Error>, MessageBuilder)>,
 
     /// The message ID of the request message.
     id: u16,
@@ -124,7 +126,8 @@ pub struct ServiceRequest {
 impl ServiceRequest {
     /// Creates a new service request.
     fn new(message: MessageBuilder,
-           complete: Complete<(Result<MessageBuf, Error>, MessageBuilder)>)
+           complete: oneshot::Sender<(Result<MessageBuf, Error>,
+                                             MessageBuilder)>)
            -> Self {
         ServiceRequest{message: message, complete: complete, id: 0}
     }

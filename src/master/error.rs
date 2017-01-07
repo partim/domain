@@ -78,6 +78,7 @@ impl From<name::FromStrError> for SyntaxError {
 /// A result with a syntax error.
 pub type SyntaxResult<T> = result::Result<T, SyntaxError>;
 
+
 //------------ ScanError -----------------------------------------------------
 
 /// An error happened while scanning master data.

@@ -2,16 +2,18 @@
 use std::fmt;
 use std::fs::File;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use ::bits::name::DNameBuf;
 use ::iana::Class;
 use ::master::bufscanner::BufScanner;
 use ::master::entry::Entry;
-use ::master::error::ScanResult;
+use ::master::error::{ScanError, ScanResult};
 use ::master::record::MasterRecord;
 use ::master::scanner::Scanner;
 
+
+//------------ Reader --------------------------------------------------------
 
 pub struct Reader<S: Scanner> {
     scanner: Option<S>,
@@ -28,6 +30,10 @@ impl<S: Scanner> Reader<S> {
             ttl: None,
             last: None
         }
+    }
+
+    pub fn set_origin(&mut self, origin: Option<Rc<DNameBuf>>) {
+        self.origin = origin
     }
 }
 
@@ -113,6 +119,13 @@ impl<S: Scanner> Iterator for Reader<S> {
 }
 
 
+//------------ FileReader ----------------------------------------------------
+
+pub type FileReader = Reader<BufScanner<File>>;
+
+
+//------------ ReaderItem ----------------------------------------------------
+
 #[derive(Clone, Debug)]
 pub enum ReaderItem {
     Record(MasterRecord),
@@ -131,6 +144,122 @@ impl fmt::Display for ReaderItem {
                 Ok(())
             }
         }
+    }
+}
+
+
+//------------ FileReaderIter ------------------------------------------------
+
+pub struct FileReaderIter {
+    /// The stack of files we are working on.
+    ///
+    /// We need this because of includes. The first element is file name.
+    stack: Vec<(PathBuf, FileReader)>,
+}
+
+impl FileReaderIter {
+    pub fn new<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        let path = path.as_ref();
+        FileReader::open(path).map(|file| {
+            FileReaderIter{stack: vec![(path.into(), file)]}
+        })
+    }
+}
+
+impl Iterator for FileReaderIter {
+    type Item = Result<MasterRecord, FileReaderError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // XXX This currently breaks at the first error encountered. To do
+        //     this properly, we need to make the scanner more resilient.
+        loop {
+            let more = {
+                let (name, reader) = match self.stack.last_mut() {
+                    Some(item) => (&item.0, &mut item.1),
+                    None => return None
+                };
+                match reader.next_record() {
+                    Ok(Some(ReaderItem::Record(record))) => {
+                        return Some(Ok(record))
+                    }
+                    Ok(Some(ReaderItem::Include{path, origin})) => {
+                        // XXX We assume UTF8 for path for now. This will
+                        //     be fixed when the scanner is switched from u8
+                        //     to char (#6). Because of this, we won’t bother
+                        //     with proper error messages either.
+                        match ::std::str::from_utf8(&path) {
+                            Ok(path) => {
+                                // Unwrap here is fine: If name were empty,
+                                // how could we have an open file?
+                                let dir = name.parent().unwrap();
+                                Ok(Some((dir.join(path), origin)))
+                            }
+                            Err(_) => {
+                                Err(FileReaderError::new_other(name.clone(),
+                                               "Illegal include file name"))
+                            }
+                        }
+                    }
+                    Ok(None) => {
+                        Ok(None)
+                    }
+                    Err(err) => {
+                        Err(FileReaderError::new(name.clone(), err))
+                    }
+                }
+            };
+            match more {
+                Ok(Some((path, origin))) => {
+                    match FileReader::open(&path) {
+                        Ok(mut reader) => {
+                            reader.set_origin(origin);
+                            self.stack.push((path, reader))
+                        }
+                        Err(err) => {
+                            self.stack.clear();
+                            return Some(Err(FileReaderError::new(path, err)))
+                        }
+                    }
+                }
+                Ok(None) => {
+                    self.stack.pop().unwrap();
+                }
+                Err(err) => {
+                    self.stack.clear();
+                    return Some(Err(err))
+                }
+            }
+        }
+    }
+}
+
+
+//------------ FileReaderError -----------------------------------------------
+
+pub struct FileReaderError {
+    path: PathBuf,
+    error: ScanError,
+}
+
+impl FileReaderError {
+    fn new<E: Into<ScanError>>(path: PathBuf, error: E) -> Self {
+        FileReaderError{path: path, error: error.into()}
+    }
+
+    fn new_other<E>(path: PathBuf, error: E) -> Self
+                 where E: Into<Box<::std::error::Error + Send + Sync>> {
+        FileReaderError::new(path,
+                             io::Error::new(io::ErrorKind::Other, error))
+    }
+}
+
+impl FileReaderError {
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
+    pub fn error(&self) -> &ScanError {
+        &self.error
     }
 }
 

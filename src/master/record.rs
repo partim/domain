@@ -21,6 +21,26 @@ impl MasterRecord {
         MasterRecord { owner: owner, class: class,
                        ttl: ttl, rdata: rdata }
     }
+
+    pub fn owner(&self) -> &DNameBuf {
+        &self.owner
+    }
+
+    pub fn ttl(&self) -> u32 {
+        self.ttl
+    }
+
+    pub fn class(&self) -> Class {
+        self.class
+    }
+
+    pub fn rtype(&self) -> Rtype {
+        self.rdata.rtype()
+    }
+
+    pub fn into_data(self) -> MasterRecordData {
+        self.rdata
+    }
 }
 
 impl MasterRecord {

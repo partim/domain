@@ -13,7 +13,8 @@ use ::bits::compose::{Composable, Composer, ComposeResult};
 use ::bits::name::{DName, DNameBuf, DNameSlice, ParsedDName};
 use ::bits::parse::{Parser, ParseError, ParseResult};
 use ::bits::rdata::{ParsedRecordData, RecordData};
-use ::iana::Rtype;
+use ::bits::record::Record;
+use ::iana::{Class, Rtype};
 use ::master::{Scanner, ScanResult, SyntaxError};
 use ::utils::netdb::{ProtoEnt, ServEnt};
 
@@ -627,6 +628,14 @@ impl<'a> Soa<ParsedDName<'a>> {
 }
 
 impl Soa<DNameBuf> {
+    pub fn record(name: DNameBuf, class: Class, ttl: u32, mname: DNameBuf,
+                  rname: DNameBuf, serial: u32, refresh: u32, retry: u32,
+                  expire: u32, minimum: u32) -> Record<DNameBuf, Self> {
+        Record::new(name, class, ttl, Self::new(mname, rname, serial,
+                                                refresh, retry, expire,
+                                                minimum))
+    }
+
     pub fn scan<S: Scanner>(scanner: &mut S, origin: Option<&DNameSlice>)
                             -> ScanResult<Self> {
         Ok(Self::new(try!(DNameBuf::scan(scanner, origin)),
