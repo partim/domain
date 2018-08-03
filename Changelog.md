@@ -1,3 +1,14 @@
+## 0.2.5
+
+Breaking Changes
+
+New
+
+Bug fixes
+
+Dependencies
+
+
 ## 0.2.4
 
 Bug fixes
