@@ -1,12 +1,8 @@
 ## 0.2.4
 
-Breaking Changes
-
-New
-
 Bug fixes
 
-Dependencies
+* fixes parsing of TXT records.
 
 
 ## 0.2.3
