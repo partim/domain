@@ -725,7 +725,7 @@ impl<'a> Txt<&'a [u8]> {
         let bytes = try!(parser.parse_bytes(len));
         let mut tmp = bytes;
         while !tmp.is_empty() {
-            let len = tmp[0] as usize;
+            let len = (tmp[0] as usize) + 1;
             if len > tmp.len() {
                 return Err(ParseError::FormErr)
             }
