@@ -22,9 +22,9 @@ The first of these smaller crates is [domain-core] which contains
 everything from the current master branch that doesn’t concern networking.
 
 Eventually, this _domain_ crate will be a cover-all crate that re-exports
-the content of all the other crates. Until all that has been available in
-the 0.2 series is ported to the new [domain-core], it will remain a kind
-of stable repository of the 0.2 series.
+the content of all the other crates. Until everything that has been
+available in the 0.2 series is ported to the new zoo of crates, it will
+remain at the state of the 0.2 series.
 
 [NLnet Labs]: https://nlnetlabs.nl/
 [Unbound]: https://nlnetlabs.nl/projects/unbound/about/
