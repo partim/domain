@@ -9,6 +9,30 @@ Status](https://ci.appveyor.com/api/projects/status/github/partim/domain?svg=tru
 [Documentation](https://docs.rs/domain/)
 
 
+## What’s Going on Here?
+
+Good news, everyone! The _domain_ crate has been adopted by [NLnet Labs],
+makers of fine DNS software such as [Unbound] and [NSD].
+
+I have used this opportunity to break it up unto smaller crates, so that
+the development in the networking arena don’t hold up the publication of
+all the other changes to the crate anymore.
+
+The first of these smaller crates is [domain-core] which contains
+everything from the current master branch that doesn’t concern networking.
+
+Eventually, this _domain_ crate will be a cover-all crate that re-exports
+the content of all the other crates. Until all that has been available in
+the 0.2 series is ported to the new [domain-core], it will remain a kind
+of stable repository of the 0.2 series.
+
+[NLnet Labs]: https://nlnetlabs.nl/
+[Unbound]: https://nlnetlabs.nl/projects/unbound/about/
+[NSD]: https://nlnetlabs.nl/projects/nsd/about/
+[domain-core]: https://github.com/NLnetLabs/domain-core
+
+
+
 ## Usage
 
 First, add this to your `Cargo.toml`:
