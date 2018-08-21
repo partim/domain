@@ -11,23 +11,24 @@ Status](https://ci.appveyor.com/api/projects/status/github/partim/domain?svg=tru
 
 ## What’s Going on Here?
 
-This crate is currently undergoing major renovations. As part of that,
-significant parts of the source are disabled and awaiting their turn.
+Good news, everyone! The _domain_ crate has been adopted by NLnet Labs,
+makers of fine DNS software such as [Unbound] and [NSD].
 
-Since [async/await] is progressing so fast, I’ve decided to delay the
-renovation of the networking parts until after it has appeared in nightly
-Rust and Tokio has caught up with the changes.
+I have used this opportunity to break it up unto smaller crates, so that
+the development in the networking arena don’t hold up the publication of
+all the other changes to the crate anymore.
 
-[async/await]: https://boats.gitlab.io/blog/post/2018-04-06-async-await-final/
+The first of these smaller crates is [domain-core] which contains
+everything from the current master branch that doesn’t concern networking.
 
-Once that has happened, there will be some big improvements to the stub
-resolver before releasing version 0.3.0.
+Eventually, this _domain_ crate will be a cover-all crate that re-exports
+the content of all the other crates. Until all that has been available in
+the 0.2 series is ported to the new [domain-core], it will remain a kind
+of stable repository of the 0.2 series.
 
-As a consequence of all this, the master branch isn’t really all that
-useful right now. You can find the last state of the 0.2 series of the
-domain crate in the [series-0.2] branch.
-
-[series-0.2]: https://github.com/partim/domain/tree/series-0.2
+[Unbound]: https://nlnetlabs.nl/projects/unbound/about/
+[NSD]: https://nlnetlabs.nl/projects/nsd/about/
+[domain-core]: https://github.com/NLnetLabs/domain-core
 
 
 ## Usage
